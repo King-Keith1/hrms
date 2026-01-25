@@ -1,0 +1,23 @@
+package com.company.hrms.controller;
+
+import com.company.hrms.service.SystemClockService;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/system")
+public class SystemController {
+
+    private final SystemClockService clockService;
+
+    public SystemController(SystemClockService clockService) {
+        this.clockService = clockService;
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('HR_MANAGER')")
+    @PostMapping("/next-day")
+    public String advanceDay() {
+        clockService.advanceDay();
+        return "Advanced to next day";
+    }
+}
