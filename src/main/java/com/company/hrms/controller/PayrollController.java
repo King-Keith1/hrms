@@ -14,29 +14,17 @@ import java.time.YearMonth;
 public class PayrollController {
 
     private final PayrollService payrollService;
-    private final EmployeeRepository employeeRepository;
 
-    public PayrollController(PayrollService payrollService,
-                             EmployeeRepository employeeRepository) {
+    public PayrollController(PayrollService payrollService) {
         this.payrollService = payrollService;
-        this.employeeRepository = employeeRepository;
     }
 
-    // HR generates payroll
-    @PreAuthorize("hasRole('HR_MANAGER')")
     @PostMapping("/generate/{employeeId}")
+    @PreAuthorize("hasRole('HR_MANAGER')")
     public PayslipResponse generate(
             @PathVariable Long employeeId,
             @RequestParam YearMonth month) {
 
-        Employee employee = employeeRepository.findById(employeeId).orElseThrow();
-
-        var payroll = payrollService.generatePayroll(employee, month);
-
-        return new PayslipResponse(
-                employee.getFullName(),
-                payroll.getMonth(),
-                payroll.getGrossPay()
-        );
+        return payrollService.generatePayroll(employeeId, month);
     }
 }

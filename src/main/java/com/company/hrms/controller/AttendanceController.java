@@ -12,12 +12,9 @@ import org.springframework.web.bind.annotation.*;
 public class AttendanceController {
 
     private final AttendanceService attendanceService;
-    private final EmployeeRepository employeeRepository;
 
-    public AttendanceController(AttendanceService attendanceService,
-                                EmployeeRepository employeeRepository) {
+    public AttendanceController(AttendanceService attendanceService) {
         this.attendanceService = attendanceService;
-        this.employeeRepository = employeeRepository;
     }
 
     @PreAuthorize("hasRole('EMPLOYEE')")
@@ -25,12 +22,6 @@ public class AttendanceController {
     public void markAttendance(@RequestParam int hoursWorked,
                                Authentication authentication) {
 
-        String username = authentication.getName();
-
-        Employee employee = employeeRepository
-                .findByUserUsername(username)
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
-
-        attendanceService.markAttendance(employee, hoursWorked);
+        attendanceService.markAttendance(authentication.getName(), hoursWorked);
     }
 }

@@ -18,6 +18,6 @@ public class SystemController {
     @PostMapping("/next-day")
     public String advanceDay() {
         clockService.advanceDay();
-        return "Advanced to next day";
+        return "System date advanced to next day";
     }
 }
