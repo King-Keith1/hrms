@@ -31,6 +31,12 @@ public class User implements UserDetails {
     private Department department;
 
     protected User() {}
+    public User(String username, String password, Role role, Department department) {
+        this.username = username;
+        this.password = password;
+        this.role = role;
+        this.department = department;
+    }
 
     // - UserDetails -
     @Override

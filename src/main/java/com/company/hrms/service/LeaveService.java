@@ -35,12 +35,12 @@ public class LeaveService {
         Employee employee = employeeRepository.findByUserUsername(username)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        LeaveRequest leave = new LeaveRequest();
-        leave.setEmployee(employee);
-        leave.setStartDate(startDate);
-        leave.setEndDate(endDate);
-        leave.setType(type);
-        leave.setStatus(LeaveStatus.PENDING);
+        LeaveRequest leave = new LeaveRequest(
+                employee,
+                startDate,
+                endDate,
+                type
+        );
 
         return leaveRepository.save(leave);
     }

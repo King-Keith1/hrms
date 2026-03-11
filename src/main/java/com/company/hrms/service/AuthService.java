@@ -35,23 +35,22 @@ public class AuthService {
                 .findById(request.departmentId())
                 .orElseThrow(() -> new RuntimeException("Department not found"));
 
-        User user = new User();
-
-        user.setUsername(request.username());
-        user.setPassword(passwordEncoder.encode(request.password()));
-        user.setRole(Role.valueOf(request.role()));
-        user.setDepartment(department);
+        User user = new User(
+                request.username(),
+                passwordEncoder.encode(request.password()),
+                Role.valueOf(request.role()),
+                department
+        );
 
         userRepository.save(user);
 
         String token = jwtService.generateToken(user);
-
-        return new AuthResponse(token);
+        return new AuthResponse(token, "Bearer");
     }
 
     public AuthResponse login(LoginRequest request) {
 
-        User user = userRepository.findByUsername(request.username())
+        User user = userRepository.findByUsernameIgnoreCase(request.username())
                 .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
@@ -59,7 +58,6 @@ public class AuthService {
         }
 
         String token = jwtService.generateToken(user);
-
-        return new AuthResponse(token);
+        return new AuthResponse(token, "Bearer");
     }
 }

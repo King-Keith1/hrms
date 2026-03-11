@@ -5,7 +5,6 @@ import com.company.hrms.entity.Employee;
 import com.company.hrms.repository.AttendanceRepository;
 import com.company.hrms.repository.EmployeeRepository;
 import org.springframework.stereotype.Service;
-import com.company.hrms.entity.Attendance;
 
 import java.time.LocalDate;
 
@@ -14,19 +13,33 @@ public class AttendanceService {
 
     private final EmployeeRepository employeeRepository;
     private final AttendanceRepository attendanceRepository;
+    private final SystemClockService clockService;
 
     public AttendanceService(EmployeeRepository employeeRepository,
-                             AttendanceRepository attendanceRepository) {
+                             AttendanceRepository attendanceRepository,
+                             SystemClockService clockService) {
         this.employeeRepository = employeeRepository;
         this.attendanceRepository = attendanceRepository;
+        this.clockService = clockService;
     }
 
+    // PUBLIC METHOD (called by controllers)
     public void markAttendance(String username, int hoursWorked) {
 
         Employee employee = employeeRepository.findByUserUsername(username)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        LocalDate today = LocalDate.now();
+        markAttendanceInternal(employee, hoursWorked);
+    }
+
+    // INTERNAL BUSINESS LOGIC
+    private void markAttendanceInternal(Employee employee, int hoursWorked) {
+
+        if (hoursWorked <= 0) {
+            throw new IllegalArgumentException("Hours worked must be greater than 0");
+        }
+
+        LocalDate today = clockService.today();
 
         attendanceRepository.findByEmployee_IdAndDate(employee.getId(), today)
                 .ifPresent(a -> {
@@ -35,11 +48,12 @@ public class AttendanceService {
 
         int overtime = Math.max(0, hoursWorked - employee.getStandardHoursPerDay());
 
-        Attendance attendance = new Attendance();
-        attendance.setEmployee(employee);
-        attendance.setHoursWorked(hoursWorked);
-        attendance.setOvertimeHours(overtime);
-        attendance.setDate(today);
+        Attendance attendance = new Attendance(
+                employee,
+                today,
+                hoursWorked,
+                overtime
+        );
 
         attendanceRepository.save(attendance);
     }

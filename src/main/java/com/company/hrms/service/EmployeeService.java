@@ -42,11 +42,12 @@ public class EmployeeService {
             }
         }
 
-        Employee employee = new Employee();
-        employee.setFullName(request.fullName());
-        employee.setEmployeeNumber(request.employeeNumber());
-        employee.setHourlyRate(BigDecimal.valueOf(request.hourlyRate()));
-        employee.setDepartment(department);
+        Employee employee = new Employee(
+                request.fullName(),
+                request.employeeNumber(),
+                department,
+                request.hourlyRate()
+        );
 
         return employeeRepository.save(employee);
     }
