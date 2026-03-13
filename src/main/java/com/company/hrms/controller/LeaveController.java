@@ -1,8 +1,7 @@
 package com.company.hrms.controller;
 
-import com.company.hrms.entity.*;
-import com.company.hrms.repository.EmployeeRepository;
-import com.company.hrms.repository.LeaveRepository;
+import com.company.hrms.entity.LeaveRequest;
+import com.company.hrms.entity.LeaveType;
 import com.company.hrms.service.LeaveService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -20,8 +19,8 @@ public class LeaveController {
         this.leaveService = leaveService;
     }
 
-    @PreAuthorize("hasRole('EMPLOYEE')")
     @PostMapping
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public LeaveRequest requestLeave(
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate,
@@ -31,13 +30,13 @@ public class LeaveController {
         return leaveService.requestLeave(
                 auth.getName(),
                 startDate,
-                endDate,
+                startDate,
                 type
         );
     }
 
-    @PreAuthorize("hasRole('HR_MANAGER')")
     @PostMapping("/{id}/approve")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public void approveLeave(@PathVariable Long id) {
         leaveService.approveLeave(id);
     }

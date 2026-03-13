@@ -1,7 +1,9 @@
 package com.company.hrms.security;
 
 import com.company.hrms.entity.User;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,16 +26,9 @@ public class JwtService {
 
     public String generateToken(User user) {
 
-        var permissions = RolePermissionMapper
-                .getPermissions(user.getRole())
-                .stream()
-                .map(Enum::name)
-                .toList();
-
         return Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("role", user.getRole().name())
-                .claim("permissions", permissions)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getKey(), SignatureAlgorithm.HS256)

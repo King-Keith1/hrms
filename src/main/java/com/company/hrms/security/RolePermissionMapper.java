@@ -13,7 +13,7 @@ public class RolePermissionMapper {
             return Set.of(Permission.values());
         }
 
-        if (role == Role.ROLE_HR_MANAGER) {
+        if (role == Role.ROLE_MANAGER) {
             return Set.of(
                     Permission.EMPLOYEE_CREATE,
                     Permission.EMPLOYEE_VIEW,

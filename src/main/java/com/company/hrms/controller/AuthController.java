@@ -1,6 +1,8 @@
 package com.company.hrms.controller;
 
-import com.company.hrms.dto.*;
+import com.company.hrms.dto.AuthResponse;
+import com.company.hrms.dto.LoginRequest;
+import com.company.hrms.dto.RegisterRequest;
 import com.company.hrms.service.AuthService;
 import org.springframework.web.bind.annotation.*;
 

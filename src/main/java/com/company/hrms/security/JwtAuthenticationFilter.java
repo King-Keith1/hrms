@@ -28,6 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return path.startsWith("/auth")
                 || path.startsWith("/h2-console")
                 || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")
                 || path.startsWith("/api-docs");
     }
 
@@ -52,30 +53,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Claims claims = jwtService.extractClaims(token);
 
             String username = claims.getSubject();
-            List<String> permissions = claims.get("permissions", List.class);
-
-            if (permissions == null) {
-                permissions = List.of();
-            }
-
-            var authorities = permissions.stream()
-                    .map(SimpleGrantedAuthority::new)
-                    .toList();
+            String role = claims.get("role", String.class);
 
             if (username != null &&
+                    role != null &&
                     SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                var authority = new SimpleGrantedAuthority(role);
 
                 var auth = new UsernamePasswordAuthenticationToken(
                         username,
                         null,
-                        authorities
+                        List.of(authority)
                 );
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
 
         } catch (JwtException e) {
-            // Invalid or expired token → ignore and continue
+            // invalid token -> request continues without auth
         }
 
         filterChain.doFilter(request, response);

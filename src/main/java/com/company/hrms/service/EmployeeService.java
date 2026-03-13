@@ -36,7 +36,7 @@ public class EmployeeService {
         Department department = departmentRepository.findById(request.departmentId())
                 .orElseThrow(() -> new RuntimeException("Department not found"));
 
-        if (creator.getRole() != Role.ROLE_ADMIN) {
+        if (creator.getRole() != Role.ROLE_MANAGER) {
             if (!creator.getDepartment().getId().equals(department.getId())) {
                 throw new RuntimeException("Cannot create employees outside your department");
             }
