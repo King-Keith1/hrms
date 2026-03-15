@@ -15,7 +15,7 @@ public class SystemController {
     }
 
     @PostMapping("/next-day")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_MANAGER')")
     public String advanceDay() {
         clockService.advanceDay();
         return "System date advanced to next day";

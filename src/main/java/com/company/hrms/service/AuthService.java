@@ -35,10 +35,15 @@ public class AuthService {
                 .findById(request.departmentId())
                 .orElseThrow(() -> new RuntimeException("Department not found"));
 
+        String roleStr = request.role().toUpperCase();
+        if (!roleStr.startsWith("ROLE_")) {
+            roleStr = "ROLE_" + roleStr;
+        }
+
         User user = new User(
                 request.username(),
                 passwordEncoder.encode(request.password()),
-                Role.valueOf(request.role()),
+                Role.valueOf(roleStr),
                 department
         );
 

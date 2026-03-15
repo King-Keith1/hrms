@@ -16,13 +16,9 @@ public class AttendanceController {
     }
 
     @PostMapping("/mark")
-    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PreAuthorize("hasAuthority('ROLE_EMPLOYEE')")
     public void markAttendance(@RequestParam int hoursWorked,
                                Authentication authentication) {
-
-        attendanceService.markAttendance(
-                authentication.getName(),
-                hoursWorked
-        );
+        attendanceService.markAttendance(authentication.getName(), hoursWorked);
     }
 }

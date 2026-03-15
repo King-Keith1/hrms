@@ -18,14 +18,10 @@ public class EmployeeController {
     }
 
     @PostMapping
-    //@PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_MANAGER')")
     public Employee createEmployee(
             @RequestBody CreateEmployeeRequest request,
             Authentication authentication) {
-
-        return employeeService.createEmployee(
-                request,
-                authentication.getName()
-        );
+        return employeeService.createEmployee(request, authentication.getName());
     }
 }

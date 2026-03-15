@@ -20,23 +20,22 @@ public class LeaveController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PreAuthorize("hasAuthority('ROLE_EMPLOYEE')")
     public LeaveRequest requestLeave(
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate,
             @RequestParam LeaveType type,
             Authentication auth) {
-
         return leaveService.requestLeave(
                 auth.getName(),
                 startDate,
-                startDate,
+                endDate,    // was startDate (bug)
                 type
         );
     }
 
     @PostMapping("/{id}/approve")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or hasAuthority('ROLE_ADMIN')")
     public void approveLeave(@PathVariable Long id) {
         leaveService.approveLeave(id);
     }

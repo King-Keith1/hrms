@@ -10,6 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -26,9 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
         return path.startsWith("/auth")
-                || path.startsWith("/h2-console")
                 || path.startsWith("/swagger-ui")
-                || path.startsWith("/v3/api-docs")
                 || path.startsWith("/api-docs");
     }
 
@@ -38,6 +37,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain)
             throws java.io.IOException, jakarta.servlet.ServletException {
+
+        // DEBUG - remove after fixing
+        System.out.println("=== JWT FILTER EXECUTING for: " + request.getRequestURI());
+        System.out.println("=== Auth header: " + request.getHeader("Authorization"));
 
         String authHeader = request.getHeader("Authorization");
 
@@ -49,15 +52,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         try {
-
             Claims claims = jwtService.extractClaims(token);
 
             String username = claims.getSubject();
             String role = claims.get("role", String.class);
 
+            Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
+
             if (username != null &&
                     role != null &&
-                    SecurityContextHolder.getContext().getAuthentication() == null) {
+                    (existingAuth == null ||
+                            !existingAuth.isAuthenticated() ||
+                            existingAuth instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)) {
 
                 var authority = new SimpleGrantedAuthority(role);
 
@@ -68,9 +74,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
+
+                // DEBUG - log successful authentication
+                System.out.println("=== JWT Authenticated user: " + username + " with role: " + role);
             }
 
         } catch (JwtException e) {
+            // temporarily log this to see what's failing
+            System.out.println("JWT ERROR: " + e.getMessage());
             // invalid token -> request continues without auth
         }
 

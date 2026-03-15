@@ -18,11 +18,10 @@ public class PayrollController {
     }
 
     @PostMapping("/generate/{employeeId}")
-    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or hasAuthority('ROLE_ADMIN')")
     public PayslipResponse generate(
             @PathVariable Long employeeId,
             @RequestParam YearMonth month) {
-
         return payrollService.generatePayroll(employeeId, month);
     }
 }

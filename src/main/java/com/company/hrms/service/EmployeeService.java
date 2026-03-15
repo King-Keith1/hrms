@@ -8,10 +8,7 @@ import com.company.hrms.entity.User;
 import com.company.hrms.repository.DepartmentRepository;
 import com.company.hrms.repository.EmployeeRepository;
 import com.company.hrms.repository.UserRepository;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 
 @Service
 public class EmployeeService {
@@ -34,12 +31,21 @@ public class EmployeeService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Department department = departmentRepository.findById(request.departmentId())
-                .orElseThrow(() -> new RuntimeException("Department not found"));
+                .orElseThrow(() -> new RuntimeException("Department not found: " + request.departmentId()));
 
-        if (creator.getRole() != Role.ROLE_MANAGER) {
-            if (!creator.getDepartment().getId().equals(department.getId())) {
-                throw new RuntimeException("Cannot create employees outside your department");
+        // ADMIN can create in any department
+        // MANAGER can only create in their own department
+        if (creator.getRole() == Role.ROLE_MANAGER) {
+            if (creator.getDepartment() == null) {
+                throw new RuntimeException("Manager has no department assigned");
             }
+            if (!creator.getDepartment().getId().equals(department.getId())) {
+                throw new RuntimeException("Managers can only create employees in their own department");
+            }
+        }
+
+        if (employeeRepository.findByEmployeeNumber(request.employeeNumber()).isPresent()) {
+            throw new RuntimeException("Employee number already exists: " + request.employeeNumber());
         }
 
         Employee employee = new Employee(
