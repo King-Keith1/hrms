@@ -2,40 +2,48 @@ package com.company.hrms.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
-@Table(name = "employees")
+@Table(name = "employees") // Stores employee information
 public class Employee {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // Primary key
 
     @Column(nullable = false)
-    private String fullName;
+    private String fullName; // Employee full name
 
     @Column(unique = true, nullable = false)
-    private String employeeNumber;
+    private String employeeNumber; // Unique employee identifier
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "department_id")
-    private Department department;
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // Prevent lazy-load serialization issues
+    private Department department; // Employee's department
 
     @Column(nullable = false)
-    private BigDecimal hourlyRate;
+    private BigDecimal hourlyRate; // Hourly pay rate
 
     @Column(nullable = false)
-    private int standardHoursPerDay = 8;
+    private int standardHoursPerDay = 8; // Default standard workday hours
 
     @Column(nullable = false)
-    private boolean active = true;
+    private boolean active = true; // Indicates if the employee is currently active
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user;
+    @JsonIgnoreProperties({"password", "authorities", "accountNonExpired",
+            "accountNonLocked", "credentialsNonExpired",
+            "enabled", "hibernateLazyInitializer", "handler",
+            "department"}) // Prevent sensitive info and lazy-load issues from being serialized
+    private User user; // Linked user account (optional)
 
+    // Protected no-args constructor required by JPA
     protected Employee() {}
 
+    // Convenience constructor for creating new employee
     public Employee(String fullName,
                     String employeeNumber,
                     Department department,
@@ -46,7 +54,7 @@ public class Employee {
         this.hourlyRate = hourlyRate;
     }
 
-    //GETTERS
+    // --- GETTERS ---
     public Long getId() {
         return id;
     }
@@ -72,7 +80,7 @@ public class Employee {
         return user;
     }
 
-    //SETTERS
+    // --- SETTERS ---
     public void setId(Long id) {
         this.id = id;
     }

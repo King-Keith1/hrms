@@ -7,6 +7,10 @@ import com.company.hrms.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service layer for authentication and registration.
+ * Handles user creation, password hashing, and JWT generation.
+ */
 @Service
 public class AuthService {
 
@@ -25,21 +29,31 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
+    /**
+     * Registers a new user and returns a JWT token.
+     *
+     * @param request RegisterRequest containing username, password, role, department
+     * @return AuthResponse containing JWT token
+     */
     public AuthResponse register(RegisterRequest request) {
 
+        // Check if username already exists
         if (userRepository.existsByUsername(request.username())) {
             throw new RuntimeException("Username already exists");
         }
 
+        // Retrieve department entity
         Department department = departmentRepository
                 .findById(request.departmentId())
                 .orElseThrow(() -> new RuntimeException("Department not found"));
 
+        // Normalize role string to ensure it starts with ROLE_
         String roleStr = request.role().toUpperCase();
         if (!roleStr.startsWith("ROLE_")) {
             roleStr = "ROLE_" + roleStr;
         }
 
+        // Create new User entity with hashed password
         User user = new User(
                 request.username(),
                 passwordEncoder.encode(request.password()),
@@ -47,21 +61,32 @@ public class AuthService {
                 department
         );
 
+        // Persist user
         userRepository.save(user);
 
+        // Generate JWT token
         String token = jwtService.generateToken(user);
         return new AuthResponse(token, "Bearer");
     }
 
+    /**
+     * Authenticates an existing user and returns a JWT token.
+     *
+     * @param request LoginRequest containing username and password
+     * @return AuthResponse containing JWT token
+     */
     public AuthResponse login(LoginRequest request) {
 
+        // Retrieve user by username
         User user = userRepository.findByUsernameIgnoreCase(request.username())
                 .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
+        // Verify password
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new RuntimeException("Invalid credentials");
         }
 
+        // Generate JWT token
         String token = jwtService.generateToken(user);
         return new AuthResponse(token, "Bearer");
     }

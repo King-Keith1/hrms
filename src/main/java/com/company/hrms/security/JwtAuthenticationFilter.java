@@ -14,15 +14,18 @@ import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
-@Component
+@Component // Spring-managed filter
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
+    private final JwtService jwtService; // Service for extracting and validating JWT
 
     public JwtAuthenticationFilter(JwtService jwtService) {
         this.jwtService = jwtService;
     }
 
+    /**
+     * Skip JWT authentication for public endpoints (auth & swagger)
+     */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
@@ -31,6 +34,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || path.startsWith("/api-docs");
     }
 
+    /**
+     * Main filter logic: validate JWT, extract user info, set SecurityContext
+     */
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -38,53 +44,53 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws java.io.IOException, jakarta.servlet.ServletException {
 
-        // DEBUG - remove after fixing
-        System.out.println("=== JWT FILTER EXECUTING for: " + request.getRequestURI());
-        System.out.println("=== Auth header: " + request.getHeader("Authorization"));
-
         String authHeader = request.getHeader("Authorization");
 
+        // If no Bearer token, skip authentication
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authHeader.substring(7);
+        String token = authHeader.substring(7); // Remove "Bearer " prefix
 
         try {
-            Claims claims = jwtService.extractClaims(token);
+            Claims claims = jwtService.extractClaims(token); // Extract claims from JWT
 
-            String username = claims.getSubject();
-            String role = claims.get("role", String.class);
+            String username = claims.getSubject(); // JWT subject (username)
+            String role = claims.get("role", String.class); // JWT role
 
             Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
 
+            // Only set authentication if username & role exist and no prior auth
             if (username != null &&
                     role != null &&
                     (existingAuth == null ||
                             !existingAuth.isAuthenticated() ||
                             existingAuth instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)) {
 
+                // Map role from JWT to Spring Security authority
                 var authority = new SimpleGrantedAuthority(role);
 
+                // Build Authentication object
                 var auth = new UsernamePasswordAuthenticationToken(
                         username,
-                        null,
+                        null, // no credentials needed (already validated)
                         List.of(authority)
                 );
 
+                // Set authentication in SecurityContext for downstream security checks
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
-                // DEBUG - log successful authentication
+                // DEBUG: log successful authentication
                 System.out.println("=== JWT Authenticated user: " + username + " with role: " + role);
             }
 
         } catch (JwtException e) {
-            // temporarily log this to see what's failing
+            // Invalid token -> log and continue request as unauthenticated
             System.out.println("JWT ERROR: " + e.getMessage());
-            // invalid token -> request continues without auth
         }
 
-        filterChain.doFilter(request, response);
+        filterChain.doFilter(request, response); // Continue filter chain
     }
 }

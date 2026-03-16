@@ -10,6 +10,10 @@ import com.company.hrms.repository.EmployeeRepository;
 import com.company.hrms.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service layer for managing Employee entities.
+ * Handles creation, validation, and optional linking to User accounts.
+ */
 @Service
 public class EmployeeService {
 
@@ -25,16 +29,24 @@ public class EmployeeService {
         this.departmentRepository = departmentRepository;
     }
 
-    public Employee createEmployee(CreateEmployeeRequest request, String username) {
+    /**
+     * Creates a new employee after validating request and permissions.
+     *
+     * @param request         DTO containing employee data
+     * @param creatorUsername Username of the authenticated user creating the employee
+     * @return Newly created Employee entity
+     */
+    public Employee createEmployee(CreateEmployeeRequest request, String creatorUsername) {
 
-        User creator = userRepository.findByUsernameIgnoreCase(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        //Retrieve the user performing the action
+        User creator = userRepository.findByUsernameIgnoreCase(creatorUsername)
+                .orElseThrow(() -> new RuntimeException("User not found: " + creatorUsername));
 
+        //Retrieve the department
         Department department = departmentRepository.findById(request.departmentId())
                 .orElseThrow(() -> new RuntimeException("Department not found: " + request.departmentId()));
 
-        // ADMIN can create in any department
-        // MANAGER can only create in their own department
+        //Restrict managers to their own department
         if (creator.getRole() == Role.ROLE_MANAGER) {
             if (creator.getDepartment() == null) {
                 throw new RuntimeException("Manager has no department assigned");
@@ -44,16 +56,25 @@ public class EmployeeService {
             }
         }
 
+        //Check for duplicate employee number
         if (employeeRepository.findByEmployeeNumber(request.employeeNumber()).isPresent()) {
             throw new RuntimeException("Employee number already exists: " + request.employeeNumber());
         }
 
+        //Create Employee entity
         Employee employee = new Employee(
                 request.fullName(),
                 request.employeeNumber(),
                 department,
                 request.hourlyRate()
         );
+
+        // Optionally link an existing User account if username provided
+        if (request.username() != null && !request.username().isBlank()) {
+            User linkedUser = userRepository.findByUsernameIgnoreCase(request.username())
+                    .orElseThrow(() -> new RuntimeException("User not found: " + request.username()));
+            employee.setUser(linkedUser);
+        }
 
         return employeeRepository.save(employee);
     }

@@ -15,4 +15,6 @@ public interface LeaveRepository extends JpaRepository<LeaveRequest, Long> {
             LocalDate end,
             LocalDate start
     );
+
+    List<LeaveRequest> findByEmployee_Id(Long employeeId);
 }
